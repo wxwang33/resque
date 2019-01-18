@@ -222,7 +222,8 @@ module Resque
       # Given a list of worker ids, returns a map of those ids to the worker's value
       # in redis, even if that value maps to nil
       def workers_map(worker_ids)
-        return @redis.hgetall(redis_key_for_state("processing"))
+        redis_keys = worker_ids.map { |id| "#{id}" }
+        return @redis.mapped_hmget(redis_key_for_state("processing"), *redis_keys)
       end
 
       # return the worker's payload i.e. job
