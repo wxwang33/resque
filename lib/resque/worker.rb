@@ -75,24 +75,21 @@ module Resque
     # Returns an array of all worker objects currently processing
     # jobs.
     def self.working
-      names = all
-      return [] unless names.any?
-
       reportedly_working = {}
 
       begin
-        reportedly_working = data_store.workers_map(names).reject do |key, value|
-          value.nil? || value.empty?
-        end
+        count ||= 0
+        reportedly_working = data_store.hgetall("workers:worker:processing")
       rescue Redis::Distributed::CannotDistribute
-        names.each do |name|
-          value = data_store.get_worker_payload(name)
-          reportedly_working[name] = value unless value.nil? || value.empty?
+        if (count += 1) < 3
+          retry
+        else
+          raise
         end
       end
 
       reportedly_working.keys.map do |key|
-        worker = find(key.sub("worker:", ''), :skip_exists => true)
+        worker = find(key, :skip_exists => true)
         worker.job = worker.decode(reportedly_working[key])
         worker
       end.compact
