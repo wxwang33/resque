@@ -920,7 +920,7 @@ module Resque
         logger.level = MonoLogger::INFO
         logger.send(severity, message)        
       else
-        Logging.log(severity, message, signal: signal)
+        Logging.log(severity, message)
       end
     end
   end
