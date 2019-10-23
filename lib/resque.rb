@@ -318,7 +318,12 @@ module Resque
   #
   # Returns nothing
   def push(queue, item)
-    data_store.push_to_queue(queue,encode(item))
+    if item.is_a?(Hash)
+      action = item.fetch(:action, 'rpush')
+      item.delete(:action)
+    end
+
+    data_store.push_to_queue(queue,encode(item), action: action)
   end
 
   # Pops a job off a queue. Queue name should be a string.
