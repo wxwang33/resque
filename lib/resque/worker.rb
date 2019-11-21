@@ -477,10 +477,18 @@ module Resque
 
       if defined?(Redis.current) && self.job.present? && self.job.dig("payload", "class") == "ExecuteTaskJob" &&
         self.job.dig("payload", "args").present? && self.job.dig("stop_task_heartbeat").blank?
-        args = self.job.dig("payload", "args")[0]
-        wf_redis_id = "#{args["app_instance_id"]}:#{args["original_workflow_id"]}:#{args["workflow_id"]}"
+        args = self.job.dig("payload", "args")
 
-        Redis.current.hset("WFHeartbeats:ProcessingTasks", wf_redis_id, "#{Time.now.to_i}")
+        if args.class == Array
+          args = args.first
+        end
+
+        if args.class == Hash
+          wf_redis_id = "#{args["app_instance_id"]}:#{args["original_workflow_id"]}:#{args["workflow_id"]}"
+          Redis.current.hset("WFHeartbeats:ProcessingTasks", wf_redis_id, "#{Time.now.to_i}")
+        else
+          log_with_severity :warn, "Unable to set heartbeat for ARGS of type #{args.class.to_s}"
+        end
       end
     end
 
