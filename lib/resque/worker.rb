@@ -475,9 +475,12 @@ module Resque
     def heartbeat!(time = data_store.server_time)
       data_store.heartbeat!(self, time)
 
-      if defined?(Redis.current) && self.job.present? && self.job.dig("payload", "class") == "ExecuteTaskJob" &&
-        self.job.dig("payload", "args").present? && self.job.dig("stop_task_heartbeat").blank?
-        args = self.job.dig("payload", "args")
+      # get job details once from redis
+      job = self.job
+
+      if defined?(Redis.current) && job.present? && job.dig("payload", "class") == "ExecuteTaskJob" &&
+        job.dig("payload", "args").present? && job.dig("stop_task_heartbeat").blank?
+        args = job.dig("payload", "args")
 
         if args.class == Array
           args = args.first
