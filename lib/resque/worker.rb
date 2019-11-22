@@ -487,8 +487,12 @@ module Resque
         end
 
         if args.class == Hash
-          wf_redis_id = "#{args["app_instance_id"]}:#{args["original_workflow_id"]}:#{args["workflow_id"]}"
-          Redis.current.hset("WFHeartbeats:ProcessingTasks", wf_redis_id, "#{Time.now.to_i}")
+          app_id = args["app_instance_id"]
+          wf_id = args["workflow_id"]
+          if Redis.current.zscore("Stop:#{app_id}", "WF-#{wf_id}").blank?
+            wf_redis_id = "#{app_id}:#{args["original_workflow_id"]}:#{wf_id}"
+            Redis.current.hset("WFHeartbeats:ProcessingTasks", wf_redis_id, "#{Time.now.to_i}")
+          end
         else
           log_with_severity :warn, "Unable to set heartbeat for ARGS of type #{args.class.to_s}"
         end
