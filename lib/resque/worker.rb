@@ -478,9 +478,18 @@ module Resque
       # get job details once from redis
       job = self.job
 
-      if defined?(Redis.current) && job.present? && job.dig("payload", "class") == "ExecuteTaskJob" &&
-        job.dig("payload", "args").present? && job.dig("stop_task_heartbeat").blank?
-        args = job.dig("payload", "args")
+      if job.present? && job.dig("queue").present? && job.dig("payload").present?
+        worker_job = Job.new(job.dig("queue"), job.dig("payload"))
+        queue_heartbeat worker_job
+        task_heartbeat worker_job
+      end
+    end
+
+    def task_heartbeat(job)
+      job_class = job.payload.dig("class")
+      if defined?(Redis.current) && (job_class == "ExecuteTaskJob" || job_class == "ExecuteWorkflowJob") &&
+        job.payload.dig("stop_task_heartbeat").blank?
+        args = job.payload.dig("args")
 
         if args.class == Array
           args = args.first
@@ -496,6 +505,15 @@ module Resque
         else
           log_with_severity :warn, "Unable to set heartbeat for ARGS of type #{args.class.to_s}"
         end
+      end
+    end
+
+    def queue_heartbeat(job)
+      job_class = job.payload.dig("class")
+      if defined?(Redis.current) && job.queue.present? &&
+        (job_class == "ExecuteTaskJob" || job_class == "ExecuteWorkflowJob")
+        app_id, priority = job.queue.split("_")
+        Redis.current.hset("WFHeartbeats:Queues", "#{app_id}:#{priority}", "#{Time.now.to_i}")
       end
     end
 
@@ -719,6 +737,8 @@ module Resque
     # Given a job, tells Redis we're working on it. Useful for seeing
     # what workers are doing and when.
     def working_on(job)
+      queue_heartbeat job
+      task_heartbeat job
       data = encode \
         :queue   => job.queue,
         :run_at  => Time.now.utc.iso8601,
