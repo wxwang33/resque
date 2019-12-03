@@ -502,7 +502,8 @@ module Resque
             app_id = args["app_instance_id"]
             wf_id = args["workflow_id"]
             original_wf_id = args["original_workflow_id"]
-            if Redis.current.zscore("Stop:#{app_id}", "WF-#{wf_id}").blank? && original_wf_id.present?
+            if args["stop"].blank? && original_wf_id.present? &&
+              Redis.current.zscore("Stop:#{app_id}", "WF-#{wf_id}").blank?
               Redis.current.hset(
                 "WFHeartbeats:ProcessingTasks",
                 "#{app_id}:#{original_wf_id}:#{wf_id}",
@@ -749,7 +750,10 @@ module Resque
     def working_on(job)
       if ENV["ENABLE_TASK_HEARTBEATS"].to_bool || ENV["ENABLE_QUEUE_HEARTBEATS"].to_bool
         queue_heartbeat job
-        task_heartbeat job
+
+        if job.payload.present? && job.payload.dig("class") == "ExecuteWorkflowJob"
+          task_heartbeat job
+        end
       end
       data = encode \
         :queue   => job.queue,
