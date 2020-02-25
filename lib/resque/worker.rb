@@ -325,7 +325,7 @@ module Resque
 
       nil
     rescue Exception => e
-      log_with_severity :error, "Error reserving job: #{e.inspect}", e
+      log_with_severity :error, "Error reserving job", e
       raise e
     end
 
