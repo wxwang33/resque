@@ -4,8 +4,13 @@ module Resque
     module_function
 
     # Thunk to the logger's own log method (if configured)
-    def self.log(severity, message)
-      Resque.logger.__send__(severity, message) if Resque.logger
+    def self.log(severity, message, exception = nil)
+      return unless Resque.logger
+      if defined?(Ougai::Logger) && Resque.logger.is_a?(Ougai::Logger)
+        Resque.logger.__send__(severity, message, exception)
+      else
+        Resque.logger.__send__(severity, message)
+      end
     end
 
     # Log level aliases

@@ -325,8 +325,7 @@ module Resque
 
       nil
     rescue Exception => e
-      log_with_severity :error, "Error reserving job: #{e.inspect}"
-      log_with_severity :error, e.backtrace.join("\n")
+      log_with_severity :error, "Error reserving job: #{e.inspect}", e
       raise e
     end
 
@@ -972,8 +971,8 @@ module Resque
       @child = nil
     end
 
-    def log_with_severity(severity, message)
-      Logging.log(severity, message)
+    def log_with_severity(severity, message, exception = nil)
+      Logging.log(severity, message, exception)
     end
   end
 end
