@@ -243,7 +243,7 @@ module Resque
       unregister_worker
     rescue Exception => exception
       return if exception.class == SystemExit && !@child && run_at_exit_hooks
-      log_with_severity :error, "Failed to start worker : #{exception.inspect}"
+      log_with_severity :error, "Failed to start worker", exception
       unregister_worker(exception)
     end
 
