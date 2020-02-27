@@ -93,7 +93,7 @@ module Resque
         new(:inline, {'class' => klass, 'args' => decode(encode(args))}).perform
       else
         action =
-          if args.is_a?(Array) && args[0].is_a?(Hash) && args[0][:to_top]
+          if args.is_a?(Array) && args[0].is_a?(Hash) && (args[0][:to_top] || args[0]['to_top'])
             'lpush'
           else
             'rpush'
