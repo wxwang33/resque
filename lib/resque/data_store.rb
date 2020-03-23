@@ -101,8 +101,8 @@ module Resque
       def push_to_queue(queue,encoded_item, action: 'rpush')
         action = 'rpush' unless action == 'lpush'
         @redis.pipelined do
-          watch_queue(queue)
           @redis.send(action.to_sym, redis_key_for_queue(queue), encoded_item)
+          watch_queue(queue)
         end
       end
 
