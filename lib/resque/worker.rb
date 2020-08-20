@@ -501,7 +501,7 @@ module Resque
             app_id = args["app_instance_id"]
             wf_id = args["workflow_id"]
             original_wf_id = args["original_workflow_id"]
-            if args["stop"].blank? && original_wf_id.present? &&
+            if args["stop"].blank? && original_wf_id.present? && !args["scheduled"].to_bool &&
               Redis.current.zscore("Stop:#{app_id}", "WF-#{wf_id}").blank?
               Redis.current.hset(
                 "WFHeartbeats:ProcessingTasks",
